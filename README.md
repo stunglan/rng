@@ -1,4 +1,12 @@
+
 # rng
+1. learn Julia Statistics  (another iteration)
+
+1. reimplement the Python code in Julia
+
+
+
+# Original README.md
 Wanna see my collection of random numbers?
 
 Code and slides for a talk given at the Equinor Developer Conference (EDC) in 2023.
