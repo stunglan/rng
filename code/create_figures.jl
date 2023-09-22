@@ -38,7 +38,7 @@ fig
 
 # cumulative plot
 
-fig = Figure(resolution = (800, 600))
+fig = Figure(resolution = (800, 600),fonts = (; regular = "Open Sans"))
 ax = Axis(fig[1,1], title = "12 ¼\" drilling",xlabel = "days",ylabel = "probability density",limits=((0, 20), (0,1)),yticks=[0.1,0.5,0.9])
 lines!(ax, x, cdf.(rv, x), color = :red, linewidth = 2)
 
@@ -51,7 +51,25 @@ axislegend(position = :rb)
 fig
 
 
+# Normal, lognormal and triangular
+
+distributions = ("Normal" => Normal(2, 1), "Lognormal" => LogNormal(log(3), 0.55), "Triangular" => TriangularDist(0, 3, 0.7))
 
 
+
+fig = Figure(resolution = (1800, 600),fonts = (; regular = "Open Sans"))
+
+
+for  (i, d) in enumerate(distributions)
+    x = LinRange(0.,quantile(d[2], 0.99),1_000_000)
+    println(quantile(d[2], 0.999))
+    ax1 = Axis(fig[1,i], title = d[1],ylabel = "pdf",limits=((0,quantile(d[2], 0.999)), nothing),yticklabelcolor = :blue)
+    ax2 = Axis(fig[1,i], ylabel = "cdf",limits=((0,quantile(d[2], 0.99)), nothing),yticks=[0.1,0.5,0.9],yticklabelcolor = :red, yaxisposition = :right)
+    lines!(ax1, x, pdf.(d[2],x ), color = :blue, linewidth = 2)
+    lines!(ax2, x, cdf.(d[2],x ), color = :red, linewidth = 2)
+
+
+end
+fig
 
 
