@@ -73,3 +73,25 @@ end
 fig
 
 
+# Add uniform distributions
+
+names = ["X", "Y", "Z"]
+
+fig = Figure(resolution = (1800, 600),fonts = (; regular = "Open Sans"))
+
+ax =[]
+
+for  (i, d) in enumerate(names)
+     push!(ax,Axis(fig[1,i], title = d,limits =((0,5),(0,1.3)),xgridvisible=false,ygridvisible=false))
+
+end
+
+ax[2].yticklabelsvisible = false
+ax[3].yticklabelsvisible = false
+
+poly!(ax[1],Point2f[(1, 0), (2, 0), (2, 1), (1, 1)], color = 1, strokecolor = :black, strokewidth = 1, colormap = :tab10, colorrange = (1, 10))
+poly!(ax[2],Point2f[(1, 0), (2, 0), (2, 1), (1, 1)], color = 2, strokecolor = :black, strokewidth = 1, colormap = :tab10, colorrange = (1, 10))
+poly!(ax[3],Point2f[(2, 0), (3, 1), (4, 0), (2, 0)], color = 3, strokecolor = :black, strokewidth = 1, colormap = :tab10, colorrange = (1, 10))
+
+fig
+
