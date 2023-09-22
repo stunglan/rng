@@ -5,6 +5,10 @@
 1. reimplement the Python code in Julia
 
 
+To generate notebooks
+```bash
+jupytext --to notebook create_figures.py
+```
 
 # Original README.md
 Wanna see my collection of random numbers?
@@ -26,6 +30,8 @@ matplotlib
 pandas
 jupytext
 ```
+
+## 
 
 ## Compiling the LaTeX presentation
 
