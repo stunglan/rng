@@ -241,3 +241,36 @@ lines!(ax1,x_pos.(time),y_pos.(time), linewidth=2, color=cgrad(:tab10, 10)[1], s
 arrows!(ax1,[0],[0],[cos(angle) * velocity/5],[sin(angle) * velocity / 5], linewidth=2, color=:black, strokewidth=2)
 
 fig
+
+
+#  Cannonball with distribution
+
+function final_position(angle, velocity, g)
+    time_in_flight = 2 * velocity * sin(angle) / g
+    return x_pos(time_in_flight)
+end
+
+RELATIVE_ERROR_ANGLE = 0.15
+
+fig = Figure(resolution=(500, 200), fonts=(; regular="Open Sans"))
+
+ax1 = Axis(fig[1, 1], title="Cannonball with distribution", ylabel="pdf", limits=(nothing, nothing), yticklabelcolor=:blue, xgridvisible=false, ygridvisible=false)
+
+final_values = []
+
+for iteration in 1:100
+    angle = deg2rad(rand(Normal(45,0.15*45)))
+    velocity = rand(Normal(10,0.01*10))
+
+    arrows!(ax1,[0],[0],[cos(angle) * velocity/5],[sin(angle) * velocity / 5], linewidth=2, color=(:black,0.1), strokewidth=2)
+    time_in_flight = 2 * velocity * sin(angle) / g
+    time = LinRange(0, time_in_flight, 2^5)
+    lines!(ax1,x_pos.(time),y_pos.(time), linewidth=2, color=(cgrad(:tab10, 10)[1],0.1), strokecolor=:black, strokewidth=2)
+
+    push!(final_values,final_position(angle, velocity, g))
+
+end
+
+hist!(ax1,final_values, bins = 50, normalization=:pdf, scale_to=3.5, color=cgrad(:tab10, 10)[2], alpha=0.2)
+
+fig
