@@ -204,11 +204,40 @@ samples = rand(distribution, 1000)
 
 fig = Figure(resolution=(800, 600), fonts=(; regular="Open Sans"))
 
-ax1 = Axis(fig[1, 1], title="Uniform", ylabel="pdf", limits=(nothing, (0, 0.45)), yticklabelcolor=:blue, xgridvisible=false, ygridvisible=false)
+ax1 = Axis(fig[1, 1], title="Normal", ylabel="pdf", limits=(nothing, (0, 0.45)), yticklabelcolor=:blue, xgridvisible=false, ygridvisible=false)
 
 lines!(ax1, x, pdf.(distribution,x), linewidth=2, color=cgrad(:tab10, 10)[1], strokecolor=:black, strokewidth=2)
 hist!(ax1, samples, normalization=:pdf, color=cgrad(:tab10, 10)[2], alpha=0.2)
 scatter!(ax1, samples, rand(Uniform(), length(samples)) .* 0.2, color=:black, markersize=5, marker=:circle, strokecolor=:black, strokewidth=0.5)
 
+
+fig
+
+# %% Cannonball
+# https://en.wikipedia.org/wiki/Projectile_motion
+
+angle = deg2rad(45)
+velocity = 10
+g = 9.81
+
+time_in_flight = 2 * velocity * sin(angle) / g
+
+time = LinRange(0, time_in_flight, 2^5)
+
+function  x_pos(t)
+    return velocity * cos(angle) * t
+end
+
+function  y_pos(t)
+    return velocity * sin(angle) * t - 0.5 * g * t^2
+end 
+
+
+fig = Figure(resolution=(500, 200), fonts=(; regular="Open Sans"))
+
+ax1 = Axis(fig[1, 1], title="Cannonball", ylabel="pdf", limits=(nothing, nothing), yticklabelcolor=:blue, xgridvisible=false, ygridvisible=false)
+
+lines!(ax1,x_pos.(time),y_pos.(time), linewidth=2, color=cgrad(:tab10, 10)[1], strokecolor=:black, strokewidth=2)
+arrows!(ax1,[0],[0],[cos(angle) * velocity/5],[sin(angle) * velocity / 5], linewidth=2, color=:black, strokewidth=2)
 
 fig
