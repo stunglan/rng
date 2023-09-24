@@ -12,7 +12,7 @@ CairoMakie.activate!()
 
 # Knut's figures
 
-
+# %% probability plot
 rv = LogNormal(log(2.5), 1) .+ 1.5
 
 p = 0.99
@@ -25,7 +25,7 @@ mode = x[argmax(pdf.(rv, x))]
 println("Mode=$mode  P50=$(quantile(rv, 0.5))  Mean=$(mean(rv))")
 println("P10=$(quantile(rv, 0.1))  P50=$(quantile(rv, 0.5))  P90=$(quantile(rv, 0.9))")
 
-# probability plot
+
 fig = Figure(resolution=(1800, 600))
 ax = Axis(fig[1, 1], title="12 ¼\" drilling", xlabel="days", ylabel="cumulative probability", limits=((0, 20), nothing))
 hist!(ax, rand(rv, 100_0), normalization=:pdf, bins=100, color=(:green, 0.2), alpha=1)
@@ -52,7 +52,7 @@ axislegend(position=:rb)
 fig
 
 
-# Normal, lognormal and triangular
+# %% Normal, lognormal and triangular
 
 distributions = ("Normal" => Normal(2, 1), "Lognormal" => LogNormal(log(3), 0.55), "Triangular" => TriangularDist(0, 3, 0.7))
 
@@ -74,7 +74,8 @@ end
 fig
 
 
-# Add uniform distributions
+# %% Add uniform distributions
+
 
 names = ["X", "Y", "Z"]
 
@@ -152,7 +153,6 @@ for (i, d) in enumerate(distributions)
     ax1 = Axis(fig[1, i], title=d[1], ylabel="pdf", limits=((0, quantile(d[2], 0.999) + 1), (0, 1.3)), yticklabelcolor=:blue, xgridvisible=false, ygridvisible=false)
 
     lines!(ax1, x, pdf.(d[2], x), linewidth=2, color=i, strokecolor=:black, strokewidth=1, colormap=:tab10, colorrange=(1, 10))
-    #band!(ax1, x, fill(0, length(x)), pdf.(d[2], x), alpha=0.2, color=cgrad(:tab10, 10)[i])
     hist!(ax1, samples[i], normalization=:pdf, color=cgrad(:tab10, 10)[i], alpha=0.2)
 
     scatter!(ax1, samples[i][1:250], rand(Uniform(), 250), color=:black, markersize=5, marker=:circle, strokecolor=:black, strokewidth=0.5)
@@ -164,7 +164,51 @@ ax[2].yticklabelsvisible = false
 ax[3].yticklabelsvisible = false
 fig
 
-display(describe(DataFrame(samples=rand(Uniform(), 1000)),:all, q10 => :q10,q90 => :q90))
 
-df = DataFrame(samples=rand(Uniform(), 1000))
-describe(df,quantile(0.1) => :q10)
+
+# %% General figures
+
+# %% uniform distribution
+
+
+
+
+distribution = Uniform()
+x = LinRange(-0.05, 1.05,2^10)
+
+samples = rand(distribution, 1000)
+
+
+fig = Figure(resolution=(800, 600), fonts=(; regular="Open Sans"))
+
+ax1 = Axis(fig[1, 1], title="Uniform", ylabel="pdf", limits=(nothing, (0, 1.2)), yticklabelcolor=:blue, xgridvisible=false, ygridvisible=false)
+
+lines!(ax1, x, pdf.(distribution,x), linewidth=2, color=cgrad(:tab10, 10)[1], strokecolor=:black, strokewidth=2)
+hist!(ax1, samples, normalization=:pdf, color=cgrad(:tab10, 10)[2], alpha=0.2)
+scatter!(ax1, samples, rand(Uniform(), length(samples)) .* 0.2, color=:black, markersize=5, marker=:circle, strokecolor=:black, strokewidth=0.5)
+
+
+fig
+
+
+# %% normal distribution
+
+
+
+
+distribution = Normal()
+x = LinRange(-4, 4,2^10)
+
+samples = rand(distribution, 1000)
+
+
+fig = Figure(resolution=(800, 600), fonts=(; regular="Open Sans"))
+
+ax1 = Axis(fig[1, 1], title="Uniform", ylabel="pdf", limits=(nothing, (0, 0.45)), yticklabelcolor=:blue, xgridvisible=false, ygridvisible=false)
+
+lines!(ax1, x, pdf.(distribution,x), linewidth=2, color=cgrad(:tab10, 10)[1], strokecolor=:black, strokewidth=2)
+hist!(ax1, samples, normalization=:pdf, color=cgrad(:tab10, 10)[2], alpha=0.2)
+scatter!(ax1, samples, rand(Uniform(), length(samples)) .* 0.2, color=:black, markersize=5, marker=:circle, strokecolor=:black, strokewidth=0.5)
+
+
+fig
