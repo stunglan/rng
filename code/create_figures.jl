@@ -95,3 +95,27 @@ poly!(ax[3],Point2f[(2, 0), (3, 1), (4, 0), (2, 0)], color = 3, strokecolor = :b
 
 fig
 
+
+# proper way
+
+fig = Figure(resolution = (1800, 600),fonts = (; regular = "Open Sans"))
+
+distributions = [
+    ("X" => Uniform(1, 2)) ,
+    ("Y" => Uniform(1, 2)),
+    ("Z" => TriangularDist(2, 4, 3)),
+]
+
+colors = [:blue,:orange,:green]
+
+for (i,d) in enumerate(distributions)
+    x = LinRange(0.,quantile(d[2], 0.99)+1,1_000_000)
+    println(quantile(d[2], 0.999))
+    ax1 = Axis(fig[1,i], title = d[1],ylabel = "pdf",limits=((0,quantile(d[2], 0.999)+1), (0,1.3)),yticklabelcolor = :blue,xgridvisible=false,ygridvisible=false)
+
+    lines!(ax1, x, pdf.(d[2],x ),  linewidth = 2,color = i, strokecolor = :black, strokewidth = 1, colormap = :tab10, colorrange = (1, 10))
+    band!(ax1,x,fill(0,length(x)),pdf.(d[2],x),alpha=0.2,color=cgrad(:tab10,10)[i])
+end
+ax[2].yticklabelsvisible = false
+ax[3].yticklabelsvisible = false
+fig
