@@ -152,7 +152,8 @@ for (i, d) in enumerate(distributions)
     ax1 = Axis(fig[1, i], title=d[1], ylabel="pdf", limits=((0, quantile(d[2], 0.999) + 1), (0, 1.3)), yticklabelcolor=:blue, xgridvisible=false, ygridvisible=false)
 
     lines!(ax1, x, pdf.(d[2], x), linewidth=2, color=i, strokecolor=:black, strokewidth=1, colormap=:tab10, colorrange=(1, 10))
-    band!(ax1, x, fill(0, length(x)), pdf.(d[2], x), alpha=0.2, color=cgrad(:tab10, 10)[i])
+    #band!(ax1, x, fill(0, length(x)), pdf.(d[2], x), alpha=0.2, color=cgrad(:tab10, 10)[i])
+    hist!(ax1, samples[i], normalization=:pdf, color=cgrad(:tab10, 10)[i], alpha=0.2)
 
     scatter!(ax1, samples[i][1:250], rand(Uniform(), 250), color=:black, markersize=5, marker=:circle, strokecolor=:black, strokewidth=0.5)
 
