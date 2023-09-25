@@ -1,7 +1,7 @@
 # %%
 using Distributions, Statistics, LinearAlgebra,DataFrames
 
-using Random;
+using Random, Dates;
 Random.seed!(2022);  # make sure this tutorial is reproducible
 
 using CairoMakie, GLMakie
@@ -327,3 +327,96 @@ lines!(ax1,0:18,collect(MutualFundIterator(yearly, interest,0, years)), linewidt
 
 
 fig
+
+
+# %% Groceries
+
+money_per_day = 
+    [
+        0.0,
+        0.0,
+        471.9,
+        784.22,
+        0.0,
+        355.29,
+        0.0,
+        600.76,
+        399.7,
+        0.0,
+        266.7,
+        238.6,
+        433.0,
+        0.0,
+        1214.8,
+        470.5,
+        0.0,
+        0.0,
+        306.4,
+        341.8,
+        0.0,
+        0.0,
+        0.0,
+        358.89,
+        0.0,
+        715.2,
+        1049.02,
+        0.0,
+        0.0,
+        536.7,
+        367.7,
+    ]
+
+    purchase_dates = 
+        [
+            "2023-05-01",
+            "2023-05-02",
+            "2023-05-03",
+            "2023-05-04",
+            "2023-05-05",
+            "2023-05-06",
+            "2023-05-07",
+            "2023-05-08",
+            "2023-05-09",
+            "2023-05-10",
+            "2023-05-11",
+            "2023-05-12",
+            "2023-05-13",
+            "2023-05-14",
+            "2023-05-15",
+            "2023-05-16",
+            "2023-05-17",
+            "2023-05-18",
+            "2023-05-19",
+            "2023-05-20",
+            "2023-05-21",
+            "2023-05-22",
+            "2023-05-23",
+            "2023-05-24",
+            "2023-05-25",
+            "2023-05-26",
+            "2023-05-27",
+            "2023-05-28",
+            "2023-05-29",
+            "2023-05-30",
+            "2023-05-31",
+        ]
+
+
+
+
+lentime = length(money_per_day)
+slice_dates = range(1, lentime, step=lentime ÷ 8)
+
+
+
+fig = Figure(resolution=(500, 300), fonts=(; regular="Open Sans"))
+
+ax1 = Axis(fig[1, 1], title="Groceries", ylabel="NOK", xlabel="Date")
+
+lines!(ax1,1:lentime,money_per_day, linewidth=2, color=(:black,0.1), strokecolor=:black, strokewidth=4,)
+tempo =string.(purchase_dates[slice_dates])
+ax1.xticks = (slice_dates, tempo)
+ax1.xticklabelrotation = pi / 4
+
+fig
+
