@@ -4,9 +4,10 @@ using Distributions, Statistics, LinearAlgebra,DataFrames
 using Random;
 Random.seed!(2022);  # make sure this tutorial is reproducible
 
-using CairoMakie
+using CairoMakie, GLMakie
 
 CairoMakie.activate!()
+#GLMakie.activate!()
 #GLMakie.set_window_config!(float=true)
 
 
@@ -254,7 +255,7 @@ RELATIVE_ERROR_ANGLE = 0.15
 
 fig = Figure(resolution=(500, 200), fonts=(; regular="Open Sans"))
 
-ax1 = Axis(fig[1, 1], title="Cannonball with distribution", ylabel="pdf", limits=(nothing, nothing), yticklabelcolor=:blue, xgridvisible=false, ygridvisible=false)
+ax1 = Axis(fig[1, 1], title="Cannonball with distribution",  limits=(nothing, nothing), yticklabelcolor=:blue, xgridvisible=false, ygridvisible=false)
 
 final_values = []
 
@@ -272,5 +273,57 @@ for iteration in 1:100
 end
 
 hist!(ax1,final_values, bins = 50, normalization=:pdf, scale_to=3.5, color=cgrad(:tab10, 10)[2], alpha=0.2)
+
+fig
+
+
+# %% Mutual fund savings
+mutable struct MutualFundIterator
+    yearly::Float64
+    interest::Float64
+    random_interest::Float64
+    years::Int
+    value::Float64
+end
+MutualFundIterator(yearly::Number,interest::Number, random_interest::Number, years::Int) = MutualFundIterator(yearly,interest, random_interest, years, 0)
+
+
+Base.length(m::MutualFundIterator) = return m.years + 1
+Base.eltype(::Type{MutualFundIterator}) = Float64
+
+Base.iterate(m::MutualFundIterator) =  m.value, m
+
+# Mutual fund savings interest changes random
+
+function Base.iterate(m::MutualFundIterator, state::MutualFundIterator) 
+    state.years -= 1
+    state.value = state.value*rand(Normal(state.interest,state.random_interest)) + state.yearly
+    if state.years < 0
+        return nothing
+    end
+    return state.value,state
+end
+
+yearly = 12
+interest = 1.05
+years = 18
+
+collect(MutualFundIterator(yearly, interest,0, years))
+
+for (i,m) in enumerate(MutualFundIterator(12, 1.05,0.1, 18))
+    println(i," ",m)
+end
+
+
+fig = Figure(resolution=(500, 200), fonts=(; regular="Open Sans"))
+
+ax1 = Axis(fig[1, 1], title="Mutual Fund", ylabel="Money", xlabel="Years" ,limits=(nothing, nothing), yticklabelcolor=:black, xgridvisible=false, ygridvisible=false,xticks = 1:years)
+
+for iteration in 1:100
+    lines!(ax1,0:years,collect(MutualFundIterator(yearly, interest,0.1, years)), linewidth=2, color=(:black,0.1), strokecolor=:black, strokewidth=4,)
+end
+
+lines!(ax1,0:18,collect(MutualFundIterator(yearly, interest,0, years)), linewidth=2, color=(cgrad(:tab10, 10)[1],1), strokecolor=:black, strokewidth=2)
+
 
 fig
