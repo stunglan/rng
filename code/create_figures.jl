@@ -1,5 +1,5 @@
 # %%
-using Distributions, Statistics, LinearAlgebra,DataFrames
+using Distributions, Statistics, LinearAlgebra,DataFrames, StatsBase
 
 using Random, Dates;
 Random.seed!(2022);  # make sure this tutorial is reproducible
@@ -22,8 +22,8 @@ quantile(rv, p)
 pdf.(rv, [1.2, 3.0])
 
 x = LinRange(0.0, quantile(rv, p), 2^10)
-mode = x[argmax(pdf.(rv, x))]
-println("Mode=$mode  P50=$(quantile(rv, 0.5))  Mean=$(mean(rv))")
+modeVar = x[argmax(pdf.(rv, x))]
+println("modeVar=$modeVar  P50=$(quantile(rv, 0.5))  Mean=$(mean(rv))")
 println("P10=$(quantile(rv, 0.1))  P50=$(quantile(rv, 0.5))  P90=$(quantile(rv, 0.9))")
 
 
@@ -32,7 +32,7 @@ ax = Axis(fig[1, 1], title="12 ¼\" drilling", xlabel="days", ylabel="cumulative
 hist!(ax, rand(rv, 100_0), normalization=:pdf, bins=100, color=(:green, 0.2), alpha=1)
 lines!(ax, x, pdf.(rv, x), color=:red, linewidth=2)
 
-lines!(ax, [mode, mode], [0, pdf(rv, mode)], linewidth=3, label="Mode = $(round(mode; digits=2))")
+lines!(ax, [modeVar, modeVar], [0, pdf(rv, modeVar)], linewidth=3, label="modeVar = $(round(modeVar; digits=2))")
 lines!(ax, [quantile(rv, 0.5), quantile(rv, 0.5)], [0, pdf(rv, quantile(rv, 0.5))], linewidth=3, label="Median = $(round(quantile(rv, 0.5); digits=2))")
 lines!(ax, [mean(rv), mean(rv)], [0, pdf(rv, mean(rv))], linewidth=3, label="Mean = $(round(mean(rv); digits=2))")
 axislegend()
@@ -414,9 +414,71 @@ fig = Figure(resolution=(500, 300), fonts=(; regular="Open Sans"))
 ax1 = Axis(fig[1, 1], title="Groceries", ylabel="NOK", xlabel="Date")
 
 lines!(ax1,1:lentime,money_per_day, linewidth=2, color=(:black,0.1), strokecolor=:black, strokewidth=4,)
+scatter!(ax1,1:lentime,money_per_day,  color=(:black,1), )
 tempo =string.(purchase_dates[slice_dates])
 ax1.xticks = (slice_dates, tempo)
 ax1.xticklabelrotation = pi / 4
 
 fig
+# %%
 
+sum(money_per_day)
+
+resamples = sample(money_per_day,(9999,length(money_per_day)),replace=true)
+
+
+sum(resamples,dims=2)
+sum(resamples[1,:])
+
+fig = Figure(resolution=(800, 400), fonts=(; regular="Open Sans"))
+
+axes = []
+
+push!(axes,Axis(fig[1, 1]))
+push!(axes,Axis(fig[1, 2]))
+push!(axes,Axis(fig[1, 3]))
+push!(axes,Axis(fig[2, 1]))
+push!(axes,Axis(fig[2, 2]))
+push!(axes,Axis(fig[2, 3]))
+
+for (i,ax) in enumerate(axes)
+    ax.title = string(round(sum(resamples[i,:]);digits=2))
+    lines!(ax,1:lentime,resamples[i,:], linewidth=2, color=(:black,0.1), strokecolor=:black, strokewidth=4,)
+    scatter!(ax,1:lentime,resamples[i,:],  color=(:black,1), )
+    #tempo =string.(purchase_dates[slice_dates])
+    ax.xticksvisible = false
+    ax.xticklabelsvisible = false
+    #ax.xticklabelrotation = pi / 4
+end
+fig
+
+fig = Figure(resolution=(800, 400), fonts=(; regular="Open Sans"))
+
+ax1 = Axis(fig[1, 1], title="Distribution of resampled sums", ylabel="samples", limits=(2500,15000,nothing,nothing),xlabel="NOK",xticks = 0:5000:14000)
+
+hist!(ax1, vec(sum(resamples,dims=2)),normalization=:none, bins= 100,linewidth=2, color=cgrad(:tab10, 10)[1], strokecolor=:black, strokewidth=2)
+
+
+ax3 = Axis(fig[1, 2],title="Cummulative distribution of resampled sums", limits=(2500,15000,nothing,nothing),xlabel="NOK",xticks = 0:5000:14000) 
+v = vec(sum(resamples,dims=2))
+
+bins =  bins = LinRange(0,15000,100)
+
+mhist = fit(Histogram,v,bins)
+
+bar_i = Vector{Float64}(undef,length(mhist.edges[1][2:end]))
+
+for (i,bin) in enumerate(mhist.edges[1][2:end])
+    println(i)
+    bar_i[i] = sum(mhist.weights[1:i])
+end
+
+barplot!(ax3,mhist.edges[1][2:end],bar_i)
+fig
+
+
+
+
+
+
+bar_i
