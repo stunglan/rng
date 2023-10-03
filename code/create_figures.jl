@@ -1,5 +1,5 @@
 # %%
-using Distributions, Statistics, LinearAlgebra,DataFrames, StatsBase
+using Distributions, Statistics, LinearAlgebra,DataFrames, StatsBase, Printf
 
 using Random, Dates;
 Random.seed!(2022);  # make sure this tutorial is reproducible
@@ -478,7 +478,80 @@ fig
 
 
 
+# Wind farms
+
+import Meshes
+
+border_coords = [(0, 0), (0.05, 0.8), (0.2, 0.9), (0.2, 0.6), (0.4, 0.6),
+                 (0.4, 0.9),(0.6, 1.0), (0.9, 1.0), (1.0, 0.2), (1, 0)]
+border = Meshes.Ring(border_coords)
+
+border |> Meshes.viz
+
+area = Meshes.PolyArea(border)
+area |> Meshes.viz
 
 
 
-bar_i
+
+function plotsamples(samples::Meshes.PointSet, area::Meshes.PolyArea;title="Wind farm")
+    fig = Figure(resolution=(800, 700), fonts=(; regular="Open Sans"))
+    ax1 = Axis(fig[1, 1], title=title)
+    Meshes.viz!(area; showfacets = false)
+    if length(samples) > 0
+        Meshes.viz!(samples; showfacets = false, color = :black,pointsize=30)
+    end
+    fig
+end
+
+
+
+"""Objective function to minimize.
+    
+We want to maximize the minimum distance, rougly speaking.
+However, we smooth the objective a little bit, compared to
+actually implementing maximize min(distance)
+"""
+function objective(points::Meshes.PointSet, area::Meshes.PolyArea)
+    searcher = Meshes.KNearestSearch(points, 2)
+
+    distances = Vector{Float64}(undef, length(points))
+
+    for (i,p) in enumerate(points)
+        inds, dists = Meshes.searchdists(p, searcher)
+        #println("ind $inds, dist $dists")
+        
+        if p ∈ area
+            distances[i] = dists[2]
+        else
+            distances[i] = 100*dists[2]
+        end
+
+    end
+    #println(distances)
+    sum(distances)
+end
+
+
+samples = rand(Uniform(), (2,25)) |> Meshes.PointSet
+
+objective(samples, area)
+
+plotsamples(samples, area;title="Objective $(@sprintf("%.4f",objective(samples, area)))")
+
+
+function permute_solution(points; iteration=nothing)
+    scale = 0.05
+    
+    points = deepcopy(points)
+
+    idx = rand(1:length(points))
+
+    points.geoms[idx] = points.geoms[idx] |> Meshes.Translate(rand(Normal())*scale,rand(Normal())*scale)
+    return points
+end
+
+permute_solution(samples)
+
+a = 1 + rand(Normal())
+samples.geoms[1] |> Meshes.Translate(a,1.)

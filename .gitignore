@@ -1,5 +1,8 @@
 rng_env/
 figures/*
+presentation/
+presentation/*/*
+presentation/figures/
 *.ipynb
 
 # Byte-compiled / optimized / DLL files
