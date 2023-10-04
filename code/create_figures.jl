@@ -1,10 +1,14 @@
 # %%
 using Distributions, Statistics, LinearAlgebra,DataFrames, StatsBase, Printf
 
+
 using Random, Dates;
 Random.seed!(2022);  # make sure this tutorial is reproducible
 
+import Meshes
+
 using CairoMakie, GLMakie
+
 
 CairoMakie.activate!()
 #GLMakie.activate!()
@@ -478,9 +482,9 @@ fig
 
 
 
-# Wind farms
+# %% Wind farms
 
-import Meshes
+
 
 border_coords = [(0, 0), (0.05, 0.8), (0.2, 0.9), (0.2, 0.6), (0.4, 0.6),
                  (0.4, 0.9),(0.6, 1.0), (0.9, 1.0), (1.0, 0.2), (1, 0)]
@@ -493,65 +497,135 @@ area |> Meshes.viz
 
 
 
+# 
 
-function plotsamples(samples::Meshes.PointSet, area::Meshes.PolyArea;title="Wind farm")
+struct WindFarm
+    turbines::Meshes.PointSet
+    area::Meshes.PolyArea
+end
+
+"""
+plotsamples(wf::WindFarm)
+
+Create a visualization of a wind farm with turbines and the area it covers.
+
+Arguments:
+- `wf::WindFarm`: a `WindFarm` object containing the turbines and the area.
+
+Returns:
+A `Figure` object with the visualization.
+"""
+function plotsamples(wf::WindFarm)
+    title = "Objective $(@sprintf("%.4f",objective(wf)))"
     fig = Figure(resolution=(800, 700), fonts=(; regular="Open Sans"))
     ax1 = Axis(fig[1, 1], title=title)
-    Meshes.viz!(area; showfacets = false)
-    if length(samples) > 0
-        Meshes.viz!(samples; showfacets = false, color = :black,pointsize=30)
+    Meshes.viz!(wf.area; showfacets = false)
+    if length(wf.turbines) > 0
+        Meshes.viz!(wf.turbines; showfacets = false, color = :black,pointsize=30)
     end
     fig
 end
 
 
-
-"""Objective function to minimize.
-    
-We want to maximize the minimum distance, rougly speaking.
-However, we smooth the objective a little bit, compared to
-actually implementing maximize min(distance)
 """
-function objective(points::Meshes.PointSet, area::Meshes.PolyArea)
-    searcher = Meshes.KNearestSearch(points, 2)
+objective(points::Meshes.PointSet, area::Meshes.PolyArea)
 
-    distances = Vector{Float64}(undef, length(points))
+Compute the objective function to minimize.
 
-    for (i,p) in enumerate(points)
+The objective is to maximize the minimum distance between the points in `points` and the boundary of the polygon `area`.
+This function computes a smoothed version of the objective.
+
+Arguments:
+- `points::Meshes.PointSet`: a set of points to evaluate the objective on.
+- `area::Meshes.PolyArea`: a polygon representing the area of interest.
+
+Returns:
+The value of the objective function.
+"""
+function objective(wf::WindFarm)
+    searcher = Meshes.KNearestSearch(wf.turbines, 2)
+
+    distances = Vector{Float64}(undef, length(wf.turbines))
+    distance_outside = 0.0
+
+    for (i,p) in enumerate(wf.turbines)
         inds, dists = Meshes.searchdists(p, searcher)
-        #println("ind $inds, dist $dists")
-        
-        if p ∈ area
-            distances[i] = dists[2]
-        else
-            distances[i] = 100*dists[2]
+        distances[i] = dists[2]
+        if p ∉ wf.area
+            #println("outside $p")
+            distance_outside += dists[2]
         end
-
     end
+    #println("distance_outside $(1000*distance_outside)")
+    ##println("distances exp mean  $(mean(exp.(-distances)))")
+    #println("distances mean $(mean(distances))")
+    distance_score = mean(exp.(-distances))  + 100*distance_outside
+
     #println(distances)
-    sum(distances)
+    sum(distance_score)
 end
 
 
-samples = rand(Uniform(), (2,25)) |> Meshes.PointSet
-
-objective(samples, area)
-
-plotsamples(samples, area;title="Objective $(@sprintf("%.4f",objective(samples, area)))")
-
-
-function permute_solution(points; iteration=nothing)
+function permute_solution(points::Meshes.PointSet)
     scale = 0.05
     
     points = deepcopy(points)
-
     idx = rand(1:length(points))
-
     points.geoms[idx] = points.geoms[idx] |> Meshes.Translate(rand(Normal())*scale,rand(Normal())*scale)
     return points
 end
 
-permute_solution(samples)
+"""Hill climbing algorithm"""
+function climb(wf::WindFarm)
+    ITERATIONS = 10^4
+    points = deepcopy(wf.turbines)
+    for iteration in 1:ITERATIONS
+        new_points = permute_solution(points)
+        if objective(WindFarm(new_points, wf.area)) < objective(WindFarm(points, wf.area))
+            println("Iteration $iteration: $(objective(WindFarm(new_points, wf.area)))")
+            points = new_points
+            
+        end
+    end
 
-a = 1 + rand(Normal())
-samples.geoms[1] |> Meshes.Translate(a,1.)
+    
+    WindFarm(points, wf.area)
+
+end
+
+
+
+
+
+
+
+samples = rand(Uniform(), (2,25)) |> Meshes.PointSet
+plotsamples(WindFarm(samples,area))
+permute_solution(samples)
+WindFarm(samples,area) |> climb |> plotsamples
+
+# %%
+
+"""Simple annealing algorithm"""
+function annealing(wf::WindFarm)
+    ITERATIONS = 10^4
+    points = deepcopy(wf.turbines)
+    for iteration in 1:ITERATIONS
+        new_points = permute_solution(points)
+        accept_worse = rand(Uniform()) < exp(-0.001 * iteration)
+        if (objective(WindFarm(new_points, wf.area)) < objective(WindFarm(points, wf.area))) || accept_worse
+            println("Iteration $iteration: $(objective(WindFarm(new_points, wf.area)))")
+            points = new_points
+            
+        end
+    end
+
+    
+    WindFarm(points, wf.area)
+
+end
+
+samples = rand(Uniform(), (2,25)) |> Meshes.PointSet
+plotsamples(WindFarm(samples,area))
+permute_solution(samples)
+WindFarm(samples,area) |> annealing |> plotsamples
