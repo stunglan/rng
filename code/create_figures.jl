@@ -594,11 +594,6 @@ function climb(wf::WindFarm)
 end
 
 
-
-
-
-
-
 samples = rand(Uniform(), (2,25)) |> Meshes.PointSet
 plotsamples(WindFarm(samples,area))
 permute_solution(samples)
@@ -629,3 +624,134 @@ samples = rand(Uniform(), (2,25)) |> Meshes.PointSet
 plotsamples(WindFarm(samples,area))
 permute_solution(samples)
 WindFarm(samples,area) |> annealing |> plotsamples
+
+# %% Resampling correlations
+
+using GLM
+patient_height = vec(
+    [
+        160,
+        172,
+        167,
+        185,
+        162,
+        163,
+        175,
+        177,
+        185,
+        165,
+        162,
+        182,
+        173,
+        162,
+        167,
+        172,
+        170,
+        177,
+        170,
+        168,
+        163,
+        178,
+        158,
+        182,
+        157,
+        167,
+        160,
+        170,
+        170,
+        160,
+        177,
+        182,
+        166,
+        168,
+        170,
+        155,
+        148,
+        175,
+        175,
+        168,
+        160,
+        180,
+        153,
+        175,
+        185,
+        145,
+        165,
+        170,
+        165,
+        175,
+    ]
+)
+
+patient_pulse = vec(
+    [
+        68,
+        116,
+        80,
+        80,
+        84,
+        95,
+        80,
+        80,
+        80,
+        76,
+        80,
+        100,
+        92,
+        88,
+        92,
+        90,
+        80,
+        90,
+        80,
+        90,
+        80,
+        80,
+        80,
+        76,
+        80,
+        80,
+        78,
+        84,
+        90,
+        80,
+        80,
+        80,
+        72,
+        80,
+        80,
+        80,
+        82,
+        104,
+        76,
+        80,
+        84,
+        68,
+        70,
+        84,
+        80,
+        64,
+        82,
+        84,
+        84,
+        72,
+    ]
+)
+
+ols = lm(@formula(patient_pulse ~ patient_height), DataFrame(patient_pulse = patient_pulse, patient_height = patient_height))
+
+
+coef(ols)
+
+v = [minimum(patient_height),maximum(patient_height)]
+
+fig = Figure(resolution=(800, 400), fonts=(; regular="Open Sans"))
+ax = Axis(fig[1, 1], title="Correlation $(@sprintf("%.4f",cor(patient_height,patient_pulse)))", ylabel="Pulse", xlabel="Height")
+scatter!(ax,patient_height,patient_pulse,  color=(:lightblue,1), )
+lines!(ax,v,predict(ols,DataFrame(patient_height = v)),  color=(:red,1), )
+
+println(" intercept: $(coef(ols)[1]), slope $(coef(ols)[2])")
+println("paerson $(cor(patient_height,patient_pulse))")
+
+
+fig
