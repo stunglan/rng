@@ -753,5 +753,46 @@ lines!(ax,v,predict(ols,DataFrame(patient_height = v)),  color=(:red,1), )
 println(" intercept: $(coef(ols)[1]), slope $(coef(ols)[2])")
 println("paerson $(cor(patient_height,patient_pulse))")
 
+function bootstrap(std, data, sampling)
+    newx = []
+    for i in 1:sampling.n
+        sample = rand(data, sampling.n)
+        ols = lm(@formula(patient_pulse ~ patient_height), sample)
+        push!(newx,rand(Normal(coef(ols)[1],std),1)[1])
+    end
+    return newx
+end
 
+function takesample(patient_height,patient_pulse, n)
+    new_height = []
+    new_pulse = []
+    for i in 1:n
+        msample = rand(1:length(patient_height), 1)
+        println(msample)
+        push!(new_height,patient_height[msample[1]])
+        push!(new_pulse,patient_pulse[msample[1]])
+    end
+    return new_height,new_pulse
+end
+
+takesample(patient_height,patient_pulse, 50)
+
+
+
+
+fig = Figure(resolution=(800, 400), fonts=(; regular="Open Sans"))
+
+grid = GridLayout()
+grid[1:3,1:3] = [Axis(fig) for i in 1:3, j in 1:3]
+
+for ax in CartesianIndex(grid)
+    println(ax)
+    #scatter!(ax,patient_height,patient_pulse,  color=(:lightblue,1), )
+end
+
+
+ax = Axis(fig[1, 1], title="Correlation $(@sprintf("%.4f",cor(patient_height,patient_pulse)))", ylabel="Pulse", xlabel="Height")
+scatter!(ax,patient_height,patient_pulse,  color=(:lightblue,1), )
+scatter!(ax,newx,predict(ols,DataFrame(patient_height = newx)),  color=(:red,1), )
 fig
+
